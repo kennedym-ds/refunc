@@ -17,6 +17,9 @@ from . import logging
 from . import config
 from . import math_stats
 from . import utils
+from . import data_science
+from . import ml
+from . import api
 
 # Version information
 __version__ = "0.1.0"
@@ -29,5 +32,8 @@ __all__ = [
     'logging',
     'config',
     'math_stats',
-    'utils'
+    'utils',
+    'data_science',
+    'ml',
+    'api'
 ]
