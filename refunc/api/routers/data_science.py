@@ -57,7 +57,7 @@ async def validate_data(
         
         # Create validator and run validation
         validator = DataValidator()
-        report = validator.validate(df, **rules)
+        report = validator.validate_dataframe(df, **rules)
         
         execution_time = time.time() - start_time
         
@@ -111,7 +111,7 @@ async def profile_data(
         
         # Create profiler and generate profile
         profiler = DataProfiler()
-        profile = profiler.profile(df, **options)
+        profile = profiler.profile_dataframe(df, **options)
         
         # Convert to response model
         return DataProfileResponse(
@@ -166,7 +166,7 @@ async def clean_data(
         
         # Create cleaner and clean data
         cleaner = DataCleaner()
-        cleaned_df, report = cleaner.clean(df, **options)
+        cleaned_df, report = cleaner.clean_dataframe(df, **options)
         
         execution_time = time.time() - start_time
         
@@ -216,7 +216,7 @@ async def validate_json_data(request: ProcessingRequest) -> ValidationReportResp
         # Create validator and run validation
         validator = DataValidator()
         options = request.options or {}
-        report = validator.validate(df, **options)
+        report = validator.validate_dataframe(df, **options)
         
         execution_time = time.time() - start_time
         

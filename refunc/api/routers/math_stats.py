@@ -101,14 +101,14 @@ async def compute_statistics(request: StatisticsRequest) -> Dict[str, Any]:
         options = request.options or {}
         
         if request.operation == "descriptive":
-            result = analyzer.compute_descriptive_stats(data)
+            result = analyzer.describe(data)
             return {
                 "operation": "descriptive",
                 "results": result._asdict() if hasattr(result, '_asdict') else dict(result)
             }
         
         elif request.operation == "normality_test":
-            result = analyzer.normality_test(data, **options)
+            result = analyzer.test_normality(data, **options)
             return {
                 "operation": "normality_test",
                 "results": result._asdict() if hasattr(result, '_asdict') else dict(result)
@@ -128,7 +128,7 @@ async def compute_statistics(request: StatisticsRequest) -> Dict[str, Any]:
         elif request.operation == "correlation":
             if len(data.shape) == 1:
                 raise ValueError("Correlation requires 2D data")
-            result = analyzer.correlation_matrix(data, **options)
+            result = analyzer.test_correlation(data, **options)
             return {
                 "operation": "correlation",
                 "results": result
