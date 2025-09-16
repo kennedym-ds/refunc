@@ -1,0 +1,16 @@
+# Core dependencies
+pandas>=1.3.0
+numpy>=1.21.0
+psutil>=5.8.0
+colorama>=0.4.4
+tqdm>=4.62.0
+pyyaml>=5.4.0
+python-dateutil>=2.8.0
+pathlib2>=2.3.0;python_version<"3.4"
+typing-extensions>=3.10.0;python_version<"3.8"
+
+# Optional dependencies for extended functionality
+pyarrow>=5.0.0  # For Parquet support
+openpyxl>=3.0.0  # For Excel support
+h5py>=3.0.0  # For HDF5 support
+joblib>=1.1.0  # For caching and serialization

@@ -1,0 +1,2 @@
+{"name": "train_loss", "value": 0.85, "timestamp": 1758054929.075007, "step": null, "epoch": null}
+{"name": "val_acc", "value": 0.78, "timestamp": 1758054929.076663, "step": null, "epoch": null}

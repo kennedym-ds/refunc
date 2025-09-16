@@ -1,0 +1,6 @@
+2025-09-16 22:03:01,629 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: imputer_median
+2025-09-16 22:03:01,638 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: scaler_standard
+2025-09-16 22:03:01,656 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: encoder_onehot
+2025-09-16 22:03:01,661 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (100, 4) → (100, 4)
+2025-09-16 22:03:01,671 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (100, 4) → (100, 4)
+2025-09-16 22:03:01,675 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (100, 4) → (100, 6)

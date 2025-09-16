@@ -1,0 +1,4 @@
+2025-09-16 21:34:48,958 - test_logger - [INFO] - Testing basic logging functionality
+2025-09-16 21:34:48,959 - test_logger - [WARNING] - Warning message
+2025-09-16 21:34:48,960 - test_logger - [ERROR] - Error message
+2025-09-16 21:34:48,960 - test_logger - [METRIC] - Training complete

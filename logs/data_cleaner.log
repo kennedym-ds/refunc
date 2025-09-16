@@ -1,0 +1,7 @@
+2025-09-16 22:03:42,041 - data_cleaner - [INFO] - Removed 1 duplicate rows
+2025-09-16 22:03:42,041 - data_cleaner - [INFO] - Completed remove_duplicates: 1 changes made
+2025-09-16 22:03:42,045 - data_cleaner - [INFO] - Completed standardize_text: 104 changes made
+2025-09-16 22:03:42,092 - data_cleaner - [INFO] - Completed fix_data_types: 1 changes made
+2025-09-16 22:03:42,095 - data_cleaner - [INFO] - Completed clean_numeric: 2 changes made
+2025-09-16 22:03:42,096 - data_cleaner - [INFO] - Completed standardize_dates: 0 changes made
+2025-09-16 22:03:42,099 - data_cleaner - [INFO] - Completed normalize_strings: 0 changes made
