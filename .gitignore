@@ -283,4 +283,6 @@ __pycache__/
 local_*.py
 test_*.py
 debug_*.py
-scratch_*.py
+scratch_*.pytest_final/
+test_venv/
+*_venv/
