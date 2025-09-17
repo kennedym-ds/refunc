@@ -9,8 +9,17 @@ python-dateutil>=2.8.0
 pathlib2>=2.3.0;python_version<"3.4"
 typing-extensions>=3.10.0;python_version<"3.8"
 
+# Scientific computing
+scipy>=1.7.0
+scikit-learn>=1.0.0
+
 # Optional dependencies for extended functionality
 pyarrow>=5.0.0  # For Parquet support
 openpyxl>=3.0.0  # For Excel support
 h5py>=3.0.0  # For HDF5 support
 joblib>=1.1.0  # For caching and serialization
+
+# REST API dependencies
+fastapi>=0.104.0  # Modern web framework for APIs
+uvicorn>=0.24.0  # ASGI server
+python-multipart>=0.0.6  # For file uploads
