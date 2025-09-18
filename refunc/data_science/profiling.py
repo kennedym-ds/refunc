@@ -306,7 +306,7 @@ class DataProfiler:
         
         # Basic statistics
         profile = ColumnProfile(
-            name=col_name,
+            name=str(col_name) if col_name is not None else "unknown",
             dtype=str(series.dtype),
             total_count=total_count,
             null_count=null_count,
@@ -324,7 +324,7 @@ class DataProfiler:
             self._analyze_numeric_column(non_null_series, profile, profile_type)
         
         # Categorical column analysis
-        elif pd.api.types.is_categorical_dtype(series) or series.dtype == 'object':
+        elif isinstance(series.dtype, pd.CategoricalDtype) or series.dtype == 'object':
             self._analyze_categorical_column(non_null_series, profile, profile_type)
         
         # DateTime column analysis
@@ -380,8 +380,8 @@ class DataProfiler:
     def _analyze_distribution(self, series: pd.Series, profile: ColumnProfile) -> None:
         """Analyze distribution of numeric data."""
         try:
-            # Use our DistributionAnalyzer
-            comparison = self.dist_analyzer.fit_best_distribution(series.values)
+            # Use our DistributionAnalyzer - convert to numpy array to ensure compatibility
+            comparison = self.dist_analyzer.fit_best_distribution(np.array(series.values))
             
             if comparison and hasattr(comparison, 'best_fit') and comparison.best_fit:
                 best_fit = comparison.best_fit

@@ -291,6 +291,13 @@ class Optimizer:
                     scipy_constraints, options, callback
                 )
             else:
+                # Check if method supports bounds
+                if scipy_bounds and method_str in ["BFGS", "CG", "Newton-CG"]:
+                    # Switch to L-BFGS-B which supports bounds
+                    import warnings
+                    warnings.warn(f"Method {method_str} cannot handle bounds. Switching to L-BFGS-B.", RuntimeWarning)
+                    method_str = "L-BFGS-B"
+                
                 result = minimize(
                     fun=obj_func,
                     x0=x0,
@@ -349,6 +356,10 @@ class Optimizer:
         """
         if options is None:
             options = {}
+        
+        # Choose appropriate method based on bounds
+        if bounds is not None and method == "brent":
+            method = "bounded"  # Use bounded method when bounds are provided
             
         try:
             result = minimize_scalar(

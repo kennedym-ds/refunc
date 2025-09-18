@@ -34,6 +34,11 @@ class SystemSnapshot(NamedTuple):
     open_files: int
     num_threads: int
     timestamp: float
+    
+    @classmethod
+    def capture(cls) -> 'SystemSnapshot':
+        """Capture current system resource snapshot."""
+        return _get_system_snapshot()
 
 
 class GPUSnapshot(NamedTuple):
@@ -52,20 +57,32 @@ class MonitoringResult:
     """Container for system monitoring results."""
     
     function_name: str
-    start_snapshot: SystemSnapshot
-    end_snapshot: SystemSnapshot
-    peak_cpu: float
-    peak_memory: float
-    total_disk_read: int
-    total_disk_write: int
-    total_net_sent: int
-    total_net_recv: int
-    duration: float
+    execution_time: float
+    cpu_usage_start: float
+    cpu_usage_end: float
+    memory_usage_start: float
+    memory_usage_end: float
     timestamp: float
+    
+    # Legacy compatibility fields
+    start_snapshot: Optional[SystemSnapshot] = None
+    end_snapshot: Optional[SystemSnapshot] = None
+    peak_cpu: Optional[float] = None
+    peak_memory: Optional[float] = None
+    total_disk_read: Optional[int] = None
+    total_disk_write: Optional[int] = None
+    total_net_sent: Optional[int] = None
+    total_net_recv: Optional[int] = None
+    duration: Optional[float] = None  # Legacy alias for execution_time
     cpu_samples: List[float] = field(default_factory=list)
     memory_samples: List[float] = field(default_factory=list)
     gpu_snapshots: List[GPUSnapshot] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def __post_init__(self):
+        """Set legacy duration field to match execution_time."""
+        if self.duration is None:
+            self.duration = self.execution_time
 
 
 class SystemMonitor:
@@ -210,22 +227,30 @@ def _get_system_snapshot() -> SystemSnapshot:
 
 
 def system_monitor(
+    func: Optional[F] = None,
+    *,
     sample_interval: float = 0.1,
     monitor_gpu: bool = False,
     print_result: bool = False,
     return_result: bool = False
-) -> Callable[[F], F]:
+) -> Union[F, Callable[[F], F]]:
     """
     Decorator to monitor system resources during function execution.
     
+    Can be used with or without parentheses:
+    - @system_monitor
+    - @system_monitor()
+    - @system_monitor(sample_interval=0.05)
+    
     Args:
+        func: Function to decorate (when used without parentheses)
         sample_interval: Interval between resource samples (seconds)
         monitor_gpu: Whether to monitor GPU resources
         print_result: Whether to print monitoring results
         return_result: Whether to return MonitoringResult
     
     Returns:
-        Decorated function
+        Decorated function or decorator function
     """
     def decorator(func: F) -> F:
         @functools.wraps(func)
@@ -256,6 +281,13 @@ def system_monitor(
                 # Create monitoring result
                 monitoring_result = MonitoringResult(
                     function_name=func.__name__,
+                    execution_time=end_time - start_time,
+                    cpu_usage_start=start_snapshot.cpu_percent,
+                    cpu_usage_end=end_snapshot.cpu_percent,
+                    memory_usage_start=start_snapshot.memory_percent,
+                    memory_usage_end=end_snapshot.memory_percent,
+                    timestamp=time.time(),
+                    # Legacy/advanced fields
                     start_snapshot=start_snapshot,
                     end_snapshot=end_snapshot,
                     peak_cpu=monitor.get_peak_cpu(),
@@ -265,7 +297,6 @@ def system_monitor(
                     total_net_sent=total_net_sent,
                     total_net_recv=total_net_recv,
                     duration=end_time - start_time,
-                    timestamp=time.time(),
                     cpu_samples=monitoring_data["cpu_samples"],
                     memory_samples=monitoring_data["memory_samples"],
                     gpu_snapshots=monitoring_data["gpu_snapshots"],
@@ -295,7 +326,14 @@ def system_monitor(
                 raise
         
         return wrapper  # type: ignore
-    return decorator
+    
+    # Handle dual-mode usage: @system_monitor vs @system_monitor()
+    if func is None:
+        # Called with parentheses: @system_monitor() or @system_monitor(sample_interval=...)
+        return decorator
+    else:
+        # Called without parentheses: @system_monitor
+        return decorator(func)
 
 
 def system_monitor_async(
@@ -345,6 +383,13 @@ def system_monitor_async(
                 # Create monitoring result
                 monitoring_result = MonitoringResult(
                     function_name=func.__name__,
+                    execution_time=end_time - start_time,
+                    cpu_usage_start=start_snapshot.cpu_percent,
+                    cpu_usage_end=end_snapshot.cpu_percent,
+                    memory_usage_start=start_snapshot.memory_percent,
+                    memory_usage_end=end_snapshot.memory_percent,
+                    timestamp=time.time(),
+                    # Legacy/advanced fields
                     start_snapshot=start_snapshot,
                     end_snapshot=end_snapshot,
                     peak_cpu=monitor.get_peak_cpu(),
@@ -354,7 +399,6 @@ def system_monitor_async(
                     total_net_sent=total_net_sent,
                     total_net_recv=total_net_recv,
                     duration=end_time - start_time,
-                    timestamp=time.time(),
                     cpu_samples=monitoring_data["cpu_samples"],
                     memory_samples=monitoring_data["memory_samples"],
                     gpu_snapshots=monitoring_data["gpu_snapshots"],
@@ -418,6 +462,13 @@ def monitor_system(
     # Create result object that will be populated
     result = MonitoringResult(
         function_name=name,
+        execution_time=0.0,
+        cpu_usage_start=start_snapshot.cpu_percent,
+        cpu_usage_end=start_snapshot.cpu_percent,
+        memory_usage_start=start_snapshot.memory_percent,
+        memory_usage_end=start_snapshot.memory_percent,
+        timestamp=time.time(),
+        # Legacy/advanced fields
         start_snapshot=start_snapshot,
         end_snapshot=start_snapshot,
         peak_cpu=0.0,
@@ -426,8 +477,7 @@ def monitor_system(
         total_disk_write=0,
         total_net_sent=0,
         total_net_recv=0,
-        duration=0.0,
-        timestamp=time.time()
+        duration=0.0
     )
     
     try:

@@ -171,24 +171,34 @@ def _get_timer_function(mode: str) -> Callable[[], float]:
 
 
 def time_it(
+    func: Optional[F] = None,
+    *,
     mode: str = TimingMode.WALL_CLOCK,
     collect_stats: bool = True,
     print_result: bool = False,
     return_result: bool = False,
-    precision: int = 6
-) -> Callable[[F], F]:
+    precision: int = 6,
+    log_results: bool = False
+) -> Union[F, Callable[[F], F]]:
     """
     Decorator to measure function execution time.
     
+    Can be used with or without parentheses:
+    - @time_it
+    - @time_it()
+    - @time_it(mode=TimingMode.PROCESS_TIME)
+    
     Args:
+        func: Function to decorate (when used without parentheses)
         mode: Timing mode (wall_clock, process_time, thread_time, perf_counter)
         collect_stats: Whether to collect statistics
         print_result: Whether to print timing result
         return_result: Whether to return TimingResult as part of function result
         precision: Number of decimal places for timing display
+        log_results: Whether to log timing results (compatibility parameter)
     
     Returns:
-        Decorated function
+        Decorated function or decorator function
     """
     def decorator(func: F) -> F:
         timer_func = _get_timer_function(mode)
@@ -238,7 +248,13 @@ def time_it(
         
         return wrapper  # type: ignore
     
-    return decorator
+    # Handle dual-mode usage: @time_it vs @time_it()
+    if func is None:
+        # Called with parentheses: @time_it() or @time_it(mode=...)
+        return decorator
+    else:
+        # Called without parentheses: @time_it
+        return decorator(func)
 
 
 def time_it_async(

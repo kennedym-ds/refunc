@@ -14,7 +14,7 @@ import sys
 import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union, Type, TypeVar, Generic
-from dataclasses import dataclass, field, fields, is_dataclass
+from dataclasses import dataclass, field, fields, is_dataclass, MISSING
 from abc import ABC, abstractmethod
 import logging
 
@@ -487,11 +487,11 @@ class ConfigManager:
                             pass
                 
                 field_values[field_name] = value
-            elif field_obj.default != dataclass_type.__dataclass_fields__[field_name].default:
-                # Use default value
+            elif field_obj.default is not MISSING:
+                # Field has a default value, skip setting it
                 pass
-            elif field_obj.default_factory != dataclass_type.__dataclass_fields__[field_name].default_factory:
-                # Use default factory
+            elif field_obj.default_factory is not MISSING:
+                # Field has a default factory, skip setting it
                 pass
             else:
                 # Field is required but missing

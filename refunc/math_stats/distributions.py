@@ -165,7 +165,11 @@ class DistributionAnalyzer:
         # Fit parameters
         try:
             if method == "mle":
-                params = dist.fit(data)
+                # Special handling for discrete distributions that don't have fit method
+                if dist_name in ['poisson', 'binomial', 'negative_binomial']:
+                    params = self._fit_discrete_distribution(data, dist_name, dist)
+                else:
+                    params = dist.fit(data)
             elif method == "moments":
                 # Method of moments (simplified implementation)
                 params = self._fit_method_of_moments(data, dist)
@@ -341,6 +345,65 @@ class DistributionAnalyzer:
         # This is a simplified implementation
         # For most distributions, fall back to MLE
         return distribution.fit(data)
+    
+    def _fit_discrete_distribution(
+        self,
+        data: np.ndarray,
+        dist_name: str,
+        distribution: stats.rv_discrete
+    ) -> Tuple[float, ...]:
+        """Fit discrete distributions using custom parameter estimation."""
+        data = np.asarray(data, dtype=int)  # Ensure integer data for discrete distributions
+        
+        if dist_name == 'poisson':
+            # Poisson: mu = sample mean
+            mu = np.mean(data)
+            return (mu, 0)  # (mu, loc)
+            
+        elif dist_name == 'binomial':
+            # Binomial: estimate n and p
+            # Use method of moments: mean = n*p, variance = n*p*(1-p)
+            mean_val = np.mean(data)
+            var_val = np.var(data)
+            
+            if var_val >= mean_val:
+                # Can't fit binomial if variance >= mean
+                # Fall back to n = max(data), p = mean/n
+                n = int(np.max(data))
+                p = mean_val / n if n > 0 else 0.5
+            else:
+                # Standard method: p = 1 - var/mean, n = mean/p
+                p = 1 - var_val / mean_val if mean_val > 0 else 0.5
+                n = int(mean_val / p) if p > 0 else 1
+            
+            # Ensure valid parameters
+            n = max(1, n)
+            p = max(0.001, min(0.999, p))
+            return (n, p, 0)  # (n, p, loc)
+            
+        elif dist_name == 'negative_binomial':
+            # Negative binomial: estimate n and p
+            # Using method of moments
+            mean_val = np.mean(data)
+            var_val = np.var(data)
+            
+            if var_val <= mean_val:
+                # Can't fit negative binomial if variance <= mean
+                # Fall back to reasonable defaults
+                n = 10
+                p = 0.5
+            else:
+                # Standard method: p = mean/var, n = mean^2/(var-mean)
+                p = mean_val / var_val
+                n = mean_val * mean_val / (var_val - mean_val)
+            
+            # Ensure valid parameters
+            n = max(0.1, n)
+            p = max(0.001, min(0.999, p))
+            return (n, p, 0)  # (n, p, loc)
+            
+        else:
+            raise ValueError(f"Unknown discrete distribution: {dist_name}")
     
     def _calculate_goodness_of_fit(
         self,

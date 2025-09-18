@@ -607,7 +607,12 @@ class DataValidator:
         
         total_cells = df.shape[0] * df.shape[1]
         missing_cells = df.isnull().sum().sum()
-        completeness_percent = (total_cells - missing_cells) / total_cells * 100
+        
+        # Avoid division by zero
+        if total_cells == 0:
+            completeness_percent = 100.0
+        else:
+            completeness_percent = (total_cells - missing_cells) / total_cells * 100
         
         if completeness_percent < 95:
             severity = ValidationSeverity.INFO

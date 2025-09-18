@@ -317,7 +317,15 @@ class DataScaler(BaseTransformer):
             # Apply scaling only to non-null values
             mask = result[col].notna()
             if mask.any():
-                result.loc[mask, col] = scaler.transform(result.loc[mask, [col]]).flatten()
+                # Get original dtype to preserve it if needed
+                original_dtype = result[col].dtype
+                scaled_values = scaler.transform(result.loc[mask, [col]]).flatten()
+                
+                # For integer columns, convert to float to allow fractional values
+                if pd.api.types.is_integer_dtype(original_dtype):
+                    result[col] = result[col].astype(float)
+                
+                result.loc[mask, col] = scaled_values
         
         return result
 
@@ -454,10 +462,15 @@ class CategoricalEncoder(BaseTransformer):
             elif method == 'onehot':
                 encoded_columns, unique_values = encoding_info[1], encoding_info[2]
                 
-                # Create one-hot encoded columns
+                # Create one-hot encoded columns efficiently using pd.concat
+                onehot_data = {}
                 for i, val in enumerate(unique_values):
                     encoded_col_name = encoded_columns[i]
-                    result[encoded_col_name] = (result[col] == val).astype(int)
+                    onehot_data[encoded_col_name] = (result[col] == val).astype(int)
+                
+                # Add all one-hot columns at once to avoid fragmentation
+                onehot_df = pd.DataFrame(onehot_data, index=result.index)
+                result = pd.concat([result, onehot_df], axis=1)
                 
                 # Drop original column
                 result = result.drop(columns=[col])
@@ -662,5 +675,8 @@ def apply_quick_preprocessing(
     
     if not result.success:
         raise RefuncError(f"Preprocessing failed: {[r.errors for r in result.get_failed_steps()]}")
+    
+    if result.final_data is None:
+        raise RefuncError("Pipeline succeeded but returned no data")
     
     return result.final_data

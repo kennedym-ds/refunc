@@ -51,7 +51,7 @@ class UnsupportedFormatError(DataError):
         )
 
 
-class DataValidationError(ValidationError):
+class DataValidationError(DataError, ValidationError):
     """Raised when data doesn't meet expected validation criteria."""
     
     def __init__(

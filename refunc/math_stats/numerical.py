@@ -14,18 +14,21 @@ import pandas as pd
 from scipy import integrate, interpolate, special, linalg
 from scipy.optimize import fsolve, root_scalar, brentq
 
-try:
-    from scipy.misc import derivative
-except ImportError:
-    # For newer scipy versions, use a manual implementation
-    def derivative(func, x0, dx=1e-5, n=1, order=3, args=()):
-        """Manual implementation of numerical derivative."""
-        if n == 1:
-            return (func(x0 + dx, *args) - func(x0 - dx, *args)) / (2 * dx)
-        elif n == 2:
-            return (func(x0 + dx, *args) - 2*func(x0, *args) + func(x0 - dx, *args)) / (dx**2)
-        else:
-            raise NotImplementedError("Higher order derivatives not implemented")
+# Numerical derivative implementation (replaces deprecated scipy.misc.derivative)
+def derivative(func, x0, dx=1e-5, n=1, order=3, args=()):
+    """
+    Numerical derivative implementation.
+    
+    This replaces the deprecated scipy.misc.derivative function.
+    """
+    if n == 1:
+        # First derivative using central difference
+        return (func(x0 + dx, *args) - func(x0 - dx, *args)) / (2 * dx)
+    elif n == 2:
+        # Second derivative
+        return (func(x0 + dx, *args) - 2*func(x0, *args) + func(x0 - dx, *args)) / (dx**2)
+    else:
+        raise NotImplementedError("Higher order derivatives not implemented")
 
 from ..exceptions import RefuncError, ValidationError
 
@@ -181,11 +184,12 @@ class NumericalIntegrator:
                 )
                 
             elif method_str == "romberg":
-                result = integrate.romberg(func, a, b, args=args, tol=tolerance)
+                # romberg method was removed in newer scipy, use quad instead
+                result, error = integrate.quad(func, a, b, args=args, epsabs=tolerance)
                 return IntegrationResult(
                     value=result,
-                    error=None,
-                    method=method_str,
+                    error=error,
+                    method="quad_romberg_fallback",
                     success=True
                 )
                 
@@ -243,7 +247,7 @@ class NumericalIntegrator:
         y_bounds: Union[Tuple[float, float], Callable],
         method: str = "dblquad",
         args: Tuple = (),
-        tolerance: float = None
+        tolerance: Optional[float] = None
     ) -> IntegrationResult:
         """
         Integrate function over 2D region.
@@ -267,11 +271,12 @@ class NumericalIntegrator:
                 if callable(y_bounds):
                     raise ValidationError("Use y_bounds as tuple for dblquad")
                     
-                result, error = integrate.dblquad(
+                integration_result = integrate.dblquad(
                     func, x_bounds[0], x_bounds[1],
                     y_bounds[0], y_bounds[1],
                     args=args, epsabs=tolerance
                 )
+                result, error = integration_result[0], integration_result[1]
                 
             else:
                 raise ValidationError(f"Unknown 2D integration method: {method}")
@@ -315,8 +320,8 @@ class NumericalIntegrator:
         error = (b - a) * np.std(y_samples) / np.sqrt(n_samples)
         
         return IntegrationResult(
-            value=estimate,
-            error=error,
+            value=float(estimate),
+            error=float(error),
             method="monte_carlo",
             function_evaluations=n_samples,
             success=True
@@ -340,7 +345,7 @@ class NumericalDifferentiator:
         func: Callable,
         x: float,
         order: int = 1,
-        dx: float = None,
+        dx: Optional[float] = None,
         method: str = "central"
     ) -> float:
         """
@@ -376,7 +381,7 @@ class NumericalDifferentiator:
         self,
         func: Callable,
         x: np.ndarray,
-        dx: float = None
+        dx: Optional[float] = None
     ) -> np.ndarray:
         """
         Compute numerical gradient of multivariate function.
@@ -409,7 +414,7 @@ class NumericalDifferentiator:
         self,
         func: Callable,
         x: np.ndarray,
-        dx: float = None
+        dx: Optional[float] = None
     ) -> np.ndarray:
         """
         Compute numerical Hessian matrix.
@@ -482,7 +487,7 @@ class RootFinder:
         bracket: Optional[Tuple[float, float]] = None,
         x0: Optional[float] = None,
         method: str = "brentq",
-        tolerance: float = None,
+        tolerance: Optional[float] = None,
         max_iterations: int = 100
     ) -> RootFindingResult:
         """
@@ -507,10 +512,16 @@ class RootFinder:
                 if bracket is None:
                     raise ValidationError("Brent method requires bracket")
                 
-                root = brentq(func, bracket[0], bracket[1], xtol=tolerance, maxiter=max_iterations)
+                root_value = brentq(func, bracket[0], bracket[1], xtol=tolerance, maxiter=max_iterations)
+                # Extract the root value - brentq returns a scalar
+                if isinstance(root_value, tuple):
+                    root_scalar = root_value[0]
+                else:
+                    root_scalar = root_value
+                    
                 result = RootFindingResult(
-                    root=root,
-                    function_value=func(root),
+                    root=float(root_scalar),
+                    function_value=func(root_scalar),
                     iterations=-1,  # brentq doesn't return iteration count
                     converged=True,
                     method=method,
@@ -566,7 +577,7 @@ class RootFinder:
         self,
         equations: Callable,
         x0: np.ndarray,
-        tolerance: float = None,
+        tolerance: Optional[float] = None,
         max_iterations: int = 100
     ) -> Tuple[np.ndarray, bool, str]:
         """
@@ -585,7 +596,15 @@ class RootFinder:
             tolerance = self.default_tolerance
             
         try:
-            solution = fsolve(equations, x0, xtol=tolerance, maxfev=max_iterations)
+            solution_result = fsolve(equations, x0, xtol=tolerance, maxfev=max_iterations)
+            # Extract solution array from result
+            if isinstance(solution_result, tuple):
+                solution = solution_result[0]
+            else:
+                solution = solution_result
+            
+            # Ensure it's a numpy array
+            solution = np.array(solution)
             residual = equations(solution)
             converged = np.allclose(residual, 0, atol=tolerance)
             
@@ -743,8 +762,8 @@ def integrate_function(
 
 def find_function_root(
     func: Callable,
-    bracket: Tuple[float, float] = None,
-    x0: float = None,
+    bracket: Optional[Tuple[float, float]] = None,
+    x0: Optional[float] = None,
     method: str = "brentq",
     **kwargs
 ) -> RootFindingResult:

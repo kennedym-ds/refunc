@@ -161,42 +161,58 @@ class StatisticsEngine:
         if percentiles is None:
             percentiles = [5, 10, 25, 50, 75, 90, 95]
             
-        data = np.array(data)
+        data = np.array(data, dtype=float)
         if len(data) == 0:
-            raise ValidationError("Cannot compute statistics for empty data")
+            raise ValueError("Cannot compute statistics for empty data")
             
-        # Basic statistics
-        count = len(data)
-        mean = np.mean(data)
-        median = np.median(data)
-        std = np.std(data, ddof=1) if count > 1 else 0.0
-        var = np.var(data, ddof=1) if count > 1 else 0.0
-        min_val = np.min(data)
-        max_val = np.max(data)
+        # Basic statistics - use nanXXX functions to handle NaN values
+        count = np.count_nonzero(~np.isnan(data))  # Count non-NaN values
+        mean = np.nanmean(data)
+        median = np.nanmedian(data)
+        std = np.nanstd(data, ddof=1) if count > 1 else 0.0
+        var = np.nanvar(data, ddof=1) if count > 1 else 0.0
+        min_val = np.nanmin(data)
+        max_val = np.nanmax(data)
         range_val = max_val - min_val
         
         # Quartiles and IQR
-        q1 = np.percentile(data, 25)
-        q3 = np.percentile(data, 75)
+        q1 = np.nanpercentile(data, 25)
+        q3 = np.nanpercentile(data, 75)
         iqr = q3 - q1
         
-        # Shape statistics
-        skewness = stats.skew(data) if count > 2 else 0.0
-        kurtosis = stats.kurtosis(data) if count > 3 else 0.0
+        # Shape statistics - use dropna data for skewness/kurtosis
+        clean_data = data[~np.isnan(data)]
+        
+        # Check for constant data to avoid precision issues
+        if len(clean_data) > 2 and np.var(clean_data) > 1e-12:
+            # Only compute skewness if there's meaningful variance
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="Precision loss occurred.*catastrophic cancellation")
+                skewness = stats.skew(clean_data)
+        else:
+            skewness = 0.0  # Constant data has zero skewness
+            
+        if len(clean_data) > 3 and np.var(clean_data) > 1e-12:
+            # Only compute kurtosis if there's meaningful variance
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="Precision loss occurred.*catastrophic cancellation")
+                kurtosis = stats.kurtosis(clean_data)
+        else:
+            kurtosis = 0.0  # Constant data has zero excess kurtosis
         
         # Additional statistics
-        cv = std / mean if mean != 0 else np.inf
-        mad = stats.median_abs_deviation(data)
+        cv = std / mean if mean != 0 and not np.isnan(mean) else np.inf
+        mad = stats.median_abs_deviation(clean_data) if len(clean_data) > 0 else 0.0
         
         # Mode (for numerical data, use most frequent value)
         try:
-            mode_result = stats.mode(data, keepdims=False)
-            mode = float(mode_result.mode) if mode_result.count > 1 else None
+            mode_result = stats.mode(clean_data, keepdims=False)
+            mode = float(mode_result.mode) if len(clean_data) > 0 and mode_result.count > 1 else None
         except:
             mode = None
             
         # Percentiles
-        percentile_values = {p: np.percentile(data, p) for p in percentiles}
+        percentile_values = {p: np.nanpercentile(data, p) for p in percentiles}
         
         # Confidence intervals
         confidence_intervals = {}
@@ -237,7 +253,7 @@ class StatisticsEngine:
             confidence_intervals=confidence_intervals
         )
     
-    def test_normality(
+    def check_normality(
         self,
         data: Union[List, np.ndarray, pd.Series],
         method: str = "shapiro"
@@ -254,7 +270,7 @@ class StatisticsEngine:
         """
         data = np.array(data)
         if len(data) < 3:
-            raise ValidationError("Need at least 3 observations for normality test")
+            raise ValueError("Need at least 3 observations for normality test")
             
         if method == "shapiro":
             from scipy.stats import shapiro
@@ -287,18 +303,25 @@ class StatisticsEngine:
             statistic = float(result[0])  # type: ignore
             p_value = float(result[1])  # type: ignore
             interpretation = "Data appears normally distributed" if p_value > 0.05 else "Data appears non-normal"
+        elif method == "ks":
+            from scipy.stats import kstest
+            # Test against normal distribution with sample mean and std
+            result = kstest(data, lambda x: stats.norm.cdf(x, np.mean(data), np.std(data)))
+            statistic = float(result[0])  # type: ignore
+            p_value = float(result[1])  # type: ignore
+            interpretation = "Data appears normally distributed" if p_value > 0.05 else "Data appears non-normal"
             
         else:
-            raise ValidationError(f"Unknown normality test method: {method}")
+            raise ValueError(f"Unknown normality test method: {method}")
             
         return StatTestResult(
-            test_name=f"{method.title()} Normality Test",
+            test_name=method,
             statistic=statistic,
             p_value=p_value,
             interpretation=interpretation
         )
     
-    def test_independence(
+    def check_independence(
         self,
         x: Union[List, np.ndarray, pd.Series],
         y: Optional[Union[List, np.ndarray, pd.Series]] = None,
@@ -341,7 +364,7 @@ class StatisticsEngine:
         else:
             raise ValidationError(f"Unknown independence test method: {method}")
     
-    def test_correlation(
+    def check_correlation(
         self,
         x: Union[List, np.ndarray, pd.Series],
         y: Union[List, np.ndarray, pd.Series],
@@ -362,25 +385,39 @@ class StatisticsEngine:
         y = np.array(y)
         
         if len(x) != len(y):
-            raise ValidationError("Variables must have same length")
+            raise ValueError("Variables must have same length")
+            
+        # Check for constant arrays to avoid correlation warnings
+        x_var = np.var(x)
+        y_var = np.var(y)
+        
+        if x_var < 1e-12 or y_var < 1e-12:
+            # One or both arrays are constant - correlation is undefined
+            return StatTestResult(
+                test_name=f"{method}_correlation",
+                statistic=np.nan,
+                p_value=np.nan
+            )
             
         if method == "pearson":
-            result = stats.pearsonr(x, y)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", message="An input array is constant.*correlation coefficient is not defined")
+                result = stats.pearsonr(x, y)
             correlation = float(result[0])  # type: ignore
             p_value = float(result[1])  # type: ignore
-            test_name = "Pearson Correlation Test"
+            test_name = "pearson"
         elif method == "spearman":
             result = stats.spearmanr(x, y)
             correlation = float(result[0])  # type: ignore
             p_value = float(result[1])  # type: ignore
-            test_name = "Spearman Rank Correlation Test"
+            test_name = "spearman"
         elif method == "kendall":
             result = stats.kendalltau(x, y)
             correlation = float(result[0])  # type: ignore
             p_value = float(result[1])  # type: ignore
-            test_name = "Kendall Tau Correlation Test"
+            test_name = "kendall"
         else:
-            raise ValidationError(f"Unknown correlation method: {method}")
+            raise ValueError(f"Unknown correlation method: {method}")
             
         # Convert to float - already done above
         # correlation = float(correlation)
@@ -578,20 +615,20 @@ def describe(data: Union[List, np.ndarray, pd.Series], **kwargs) -> DescriptiveS
     return engine.describe(data, **kwargs)
 
 
-def test_normality(data: Union[List, np.ndarray, pd.Series], method: str = "shapiro") -> StatTestResult:
+def assess_normality(data: Union[List, np.ndarray, pd.Series], method: str = "shapiro") -> StatTestResult:
     """Test normality of data."""
     engine = StatisticsEngine()
-    return engine.test_normality(data, method)
+    return engine.check_normality(data, method)
 
 
-def test_correlation(
+def assess_correlation(
     x: Union[List, np.ndarray, pd.Series],
     y: Union[List, np.ndarray, pd.Series],
     method: str = "pearson"
 ) -> StatTestResult:
     """Test correlation between variables."""
     engine = StatisticsEngine()
-    return engine.test_correlation(x, y, method)
+    return engine.check_correlation(x, y, method)
 
 
 def compare_groups(

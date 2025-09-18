@@ -53,8 +53,8 @@ from .statistics import (
     DescriptiveStats,
     StatTestType,
     describe,
-    test_normality,
-    test_correlation,
+    assess_normality as test_normality,
+    assess_correlation as test_correlation,
     compare_groups,
     bootstrap_ci,
     detect_outliers

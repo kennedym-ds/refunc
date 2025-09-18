@@ -40,6 +40,10 @@ dependencies = [
     "openpyxl>=3.0.0",
     "h5py>=3.0.0",
     "joblib>=1.1.0",
+    "scipy>=1.7.0",
+    "scikit-learn>=1.0.0",
+    "matplotlib>=3.5.0",
+    "seaborn>=0.11.0",
 ]
 
 [project.optional-dependencies]
@@ -103,9 +107,14 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra -q --strict-markers --cov=refunc --cov-report=term-missing"
+addopts = "-ra -q --strict-markers"
+asyncio_mode = "auto"
 testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_functions = ["test_*"]
+norecursedirs = ["refunc"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "gpu: marks tests that require GPU (deselect with '-m \"not gpu\"')",
+    "asyncio: marks async tests",
 ]

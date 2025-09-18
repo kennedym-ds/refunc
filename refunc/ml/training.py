@@ -150,8 +150,8 @@ class AutoMLTrainer:
                 }),
                 ('lr', LogisticRegression(random_state=self.random_state), {
                     'C': [0.1, 1, 10],
-                    'penalty': ['l1', 'l2'],
-                    'solver': ['liblinear', 'lbfgs']
+                    'penalty': ['l2'],  # Use only l2 penalty for compatibility
+                    'solver': ['lbfgs']  # lbfgs only supports l2 or None penalty
                 })
             ]
         else:  # regression
@@ -205,15 +205,33 @@ class AutoMLTrainer:
         
         for name, model, param_grid in models:
             try:
+                # Calculate parameter space size
+                param_space_size = 1
+                for param_values in param_grid.values():
+                    param_space_size *= len(param_values)
+                
+                # Choose search method and iterations based on parameter space size
+                if param_space_size <= 10:
+                    # Use grid search for small parameter spaces
+                    search_method = 'grid'
+                    n_iter = 10  # Default value, won't be used for grid search
+                else:
+                    # Use random search for larger parameter spaces
+                    search_method = 'random'
+                    n_iter = min(20, param_space_size)  # Don't exceed total combinations
+                
                 # Optimize hyperparameters
                 optimizer = HyperparameterOptimizer(
-                    method='random',
+                    method=search_method,
                     cv=self.cv,
                     scoring=self.scoring,
                     random_state=self.random_state
                 )
                 
-                best_model = optimizer.optimize(model, param_grid, X, y, n_iter=20)
+                if search_method == 'grid':
+                    best_model = optimizer.optimize(model, param_grid, X, y)
+                else:
+                    best_model = optimizer.optimize(model, param_grid, X, y, n_iter=n_iter)
                 
                 # Cross-validate best model
                 cv_scores = cross_val_score(
@@ -283,10 +301,13 @@ def optimize_hyperparameters(
     method: str = 'grid',
     cv: int = 5,
     scoring: Optional[str] = None
-) -> BaseEstimator:
+) -> Dict[str, Any]:
     """Optimize hyperparameters for given estimator."""
     optimizer = HyperparameterOptimizer(method=method, cv=cv, scoring=scoring)
-    return optimizer.optimize(estimator, param_grid, X, y)
+    optimizer.optimize(estimator, param_grid, X, y)
+    if optimizer.best_params_ is None:
+        raise RuntimeError("Hyperparameter optimization failed to find best parameters")
+    return optimizer.best_params_
 
 
 def auto_train_models(

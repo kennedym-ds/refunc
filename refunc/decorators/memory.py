@@ -163,6 +163,8 @@ def _format_bytes(bytes_value: int) -> str:
 
 
 def memory_profile(
+    func: Optional[F] = None,
+    *,
     mode: str = MemoryMode.BASIC,
     track_peak: bool = True,
     track_tracemalloc: bool = False,
@@ -170,11 +172,17 @@ def memory_profile(
     return_result: bool = False,
     gc_before: bool = False,
     gc_after: bool = False
-) -> Callable[[F], F]:
+) -> Union[F, Callable[[F], F]]:
     """
     Decorator to monitor memory usage of functions.
     
+    Can be used with or without parentheses:
+    - @memory_profile
+    - @memory_profile()
+    - @memory_profile(mode=MemoryMode.DETAILED)
+    
     Args:
+        func: Function to decorate (when used without parentheses)
         mode: Memory monitoring mode
         track_peak: Whether to track peak memory usage
         track_tracemalloc: Whether to use tracemalloc for detailed tracking
@@ -184,7 +192,7 @@ def memory_profile(
         gc_after: Whether to run garbage collection after
     
     Returns:
-        Decorated function
+        Decorated function or decorator function
     """
     def decorator(func: F) -> F:
         @functools.wraps(func)
@@ -297,7 +305,14 @@ def memory_profile(
                 raise
         
         return wrapper  # type: ignore
-    return decorator
+    
+    # Handle dual-mode usage: @memory_profile vs @memory_profile()
+    if func is None:
+        # Called with parentheses: @memory_profile() or @memory_profile(mode=...)
+        return decorator
+    else:
+        # Called without parentheses: @memory_profile
+        return decorator(func)
 
 
 def memory_profile_async(
