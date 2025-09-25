@@ -24,10 +24,6 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.intersphinx',
     'sphinx.ext.autosummary',
-    'sphinx_autodoc_typehints',
-    'myst_parser',
-    'sphinx_copybutton',
-    'nbsphinx',
 ]
 
 templates_path = ['_templates']
@@ -68,21 +64,5 @@ intersphinx_mapping = {
     'pandas': ('https://pandas.pydata.org/docs/', None),
 }
 
-# MyST settings
-myst_enable_extensions = [
-    "colon_fence",
-    "deflist",
-    "dollarmath",
-    "fieldlist",
-    "html_admonition",
-    "html_image",
-    "linkify",
-    "replacements",
-    "smartquotes",
-    "strikethrough",
-    "substitution",
-    "tasklist",
-]
-
 # Notebook execution
-nbsphinx_execute = 'never'  # Don't execute notebooks during build
+# nbsphinx_execute = 'never'  # Don't execute notebooks during build
