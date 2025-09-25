@@ -971,6 +971,7 @@ comparison.plot_results()
 
 ## See Also
 
+- **[📈 Performance Guide](../guides/performance.md)** - Comprehensive performance monitoring guide
 - **[📝 Logging](logging.md)** - Integration with logging framework
 - **[⚠️ Exceptions](exceptions.md)** - Error handling in decorators
 - **[📊 Math & Statistics](math_stats.md)** - Statistical analysis utilities
