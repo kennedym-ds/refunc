@@ -155,6 +155,93 @@ def capture_logs():
     logger.removeHandler(handler)
 
 
+# Additional fixtures for integration tests
+@pytest.fixture
+def integration_config():
+    """Provide configuration for integration tests."""
+    return {
+        'test_mode': True,
+        'integration_test': True,
+        'logging': {
+            'level': 'DEBUG',
+            'console_enabled': True,
+            'file_enabled': True
+        },
+        'performance': {
+            'enable_monitoring': True,
+            'collect_metrics': True
+        },
+        'data': {
+            'batch_size': 10,  # Small batch size for testing
+            'cache_enabled': True
+        }
+    }
+
+
+@pytest.fixture
+def large_sample_dataframe():
+    """Create a larger DataFrame for performance testing."""
+    np.random.seed(42)
+    size = 10000
+    return pd.DataFrame({
+        'numeric': np.random.randn(size),
+        'categorical': np.random.choice(['A', 'B', 'C', 'D', 'E'], size),
+        'missing': np.random.choice([1, 2, 3, None], size),
+        'text': [f'text_{i%1000}' for i in range(size)],
+        'binary': np.random.choice([0, 1], size),
+        'float_col': np.random.uniform(0, 100, size),
+        'id': range(size)
+    })
+
+
+@pytest.fixture
+def performance_baseline():
+    """Provide performance baseline expectations for tests."""
+    return {
+        'file_operations': {
+            'save_1000_rows_max_seconds': 1.0,
+            'load_1000_rows_max_seconds': 0.5
+        },
+        'memory_usage': {
+            'max_growth_mb': 100,
+            'leak_threshold_mb': 10
+        },
+        'decorator_overhead': {
+            'max_overhead_ratio': 2.0,
+            'acceptable_overhead_ratio': 1.5
+        }
+    }
+
+
+@pytest.fixture
+def mock_ml_model():
+    """Provide a mock ML model for testing."""
+    class MockMLModel:
+        def __init__(self):
+            self.is_trained = False
+            self.predictions_made = 0
+            
+        def train(self, X, y):
+            self.is_trained = True
+            return {'accuracy': 0.85, 'loss': 0.15}
+            
+        def predict(self, X):
+            if not self.is_trained:
+                raise ValueError("Model not trained")
+            self.predictions_made += len(X)
+            return np.random.choice([0, 1], size=len(X))
+            
+        def predict_proba(self, X):
+            if not self.is_trained:
+                raise ValueError("Model not trained")
+            probas = np.random.uniform(0.1, 0.9, size=(len(X), 2))
+            # Normalize to sum to 1
+            probas = probas / probas.sum(axis=1, keepdims=True)
+            return probas
+    
+    return MockMLModel()
+
+
 # Markers for test categorization
 pytest_plugins = []
 
@@ -173,11 +260,18 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "gpu: marks tests that require GPU"
     )
+    config.addinivalue_line(
+        "markers", "benchmark: marks tests for performance benchmarking"
+    )
 
 
 def pytest_collection_modifyitems(config, items):
     """Modify test collection to add markers based on test location."""
     for item in items:
-        # Add unit marker to all tests by default
-        if not any(mark.name in ['integration', 'slow', 'gpu'] for mark in item.iter_markers()):
+        # Add integration marker to tests in integration directory
+        if 'integration' in str(item.fspath):
+            item.add_marker(pytest.mark.integration)
+        
+        # Add unit marker to all other tests by default
+        elif not any(mark.name in ['integration', 'slow', 'gpu', 'benchmark'] for mark in item.iter_markers()):
             item.add_marker(pytest.mark.unit)
