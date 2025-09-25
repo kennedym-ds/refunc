@@ -15,9 +15,10 @@ from refunc.data_science import (
     profile_dataframe, quick_profile, compare_profiles,
     
     # Transformations
-    TransformationPipeline, BaseTransformer, MissingValueImputer,
-    DataScaler, OutlierRemover, CategoricalEncoder,
+    TransformationPipeline, PipelineJoinConfig, BaseTransformer,
+    MissingValueImputer, DataScaler, OutlierRemover, CategoricalEncoder,
     create_basic_pipeline, create_robust_pipeline, apply_quick_preprocessing,
+    join_dataframes_on_common_columns,
     
     # Cleaning
     DataCleaner, CleaningResult, CleaningReport,
@@ -424,7 +425,7 @@ def quick_profile(df: pd.DataFrame) -> str
 
 ### TransformationPipeline
 
-Composable data transformation pipeline with logging and error handling.
+Composable data transformation pipeline with logging and error handling. Pipelines can now perform an optional pre-step join by supplying a `PipelineJoinConfig`, allowing the primary DataFrame to merge with auxiliary inputs before any transformation steps run.
 
 ```python
 class TransformationPipeline:
@@ -465,6 +466,49 @@ class TransformationPipeline:
     def fit_transform(self, data: pd.DataFrame, target: Optional[pd.Series] = None) -> PipelineResult
 ```
 
+#### PipelineJoinConfig
+
+```python
+@dataclass(frozen=True)
+class PipelineJoinConfig:
+    sources: JoinSourceProvider
+    columns: Optional[Sequence[str]] = None
+    how: MergeHow = "inner"
+    validate: Optional[MergeValidate] = None
+    indicator: Union[bool, str] = False
+    sort: bool = False
+    suffix_template: str = "_df{index}"
+```
+
+- `sources`: Sequence (or callable returning a sequence) of additional `DataFrame` objects to merge with the pipeline input.
+- `columns`: Specific column names to join on. When omitted, all sources must share at least one common column name.
+- `how`: Pandas merge strategy (`"inner"`, `"left"`, `"outer"`, etc.).
+- `validate`: Optional pandas validation rule such as `"1:1"` or `"1:m"` to enforce join cardinality.
+- `indicator`: Append merge provenance information using pandas' indicator column.
+- `suffix_template`: Template applied to duplicate column names contributed by additional sources (receives the source index).
+
+```python
+from refunc.data_science import (
+    PipelineJoinConfig,
+    TransformationPipeline,
+    join_dataframes_on_common_columns,
+)
+
+reference_frame = pd.read_parquet("lookups/country_codes.parquet")
+
+join_config = PipelineJoinConfig(
+    sources=[reference_frame],
+    columns=["country_code"],
+    how="left",
+    validate="m:1",
+    indicator="country_match",
+)
+
+pipeline = (TransformationPipeline("customer_enrichment", join_config=join_config)
+            .add_imputation()
+            .add_scaling())
+```
+
 **Example Usage:**
 
 ```python
@@ -478,6 +522,9 @@ pipeline = (TransformationPipeline("preprocessing")
            .add_imputation(ImputationMethod.MEDIAN)
            .add_scaling(ScalingMethod.STANDARD)
            .add_encoding(method='onehot', drop_first=True))
+
+# Attach a join configuration later if needed
+pipeline.set_join_config(join_config)
 
 # Fit and transform data
 result = pipeline.fit_transform(df, target=target_series)
@@ -602,25 +649,80 @@ class PipelineResult:
 ### Pipeline Convenience Functions
 
 ```python
-def create_basic_pipeline() -> TransformationPipeline
-def create_robust_pipeline() -> TransformationPipeline
+def create_basic_pipeline(
+    *,
+    join_config: Optional[PipelineJoinConfig] = None,
+) -> TransformationPipeline
+
+def create_robust_pipeline(
+    *,
+    join_config: Optional[PipelineJoinConfig] = None,
+) -> TransformationPipeline
 
 def apply_quick_preprocessing(
     data: pd.DataFrame,
     target: Optional[pd.Series] = None,
-    include_outlier_removal: bool = False
+    include_outlier_removal: bool = False,
+    *,
+    join_config: Optional[PipelineJoinConfig] = None,
+    join_sources: Optional[JoinSourceProvider] = None,
+    join_columns: Optional[Sequence[str]] = None,
+    join_how: MergeHow = "inner",
+    join_validate: Optional[MergeValidate] = None,
+    join_indicator: Union[bool, str] = False,
+    join_sort: bool = False,
+    join_suffix_template: str = "_df{index}",
 ) -> pd.DataFrame
 ```
 
 **Example:**
 
 ```python
-# Quick preprocessing
-cleaned_data = apply_quick_preprocessing(df, include_outlier_removal=True)
+# Quick preprocessing with reference data join
+lookup_df = pd.read_csv("lookups/channel_labels.csv")
+
+cleaned_data = apply_quick_preprocessing(
+    df,
+    include_outlier_removal=True,
+    join_sources=[lookup_df],
+    join_columns=["channel_id"],
+    join_how="left",
+    join_validate="m:1",
+)
 
 # Or use predefined pipelines
-robust_pipeline = create_robust_pipeline()
+robust_pipeline = create_robust_pipeline(join_config=join_config)
 result = robust_pipeline.fit_transform(df)
+```
+
+### Joining Utilities
+
+#### join_dataframes_on_common_columns
+
+```python
+def join_dataframes_on_common_columns(
+    dataframes: Sequence[pd.DataFrame],
+    *,
+    columns: Optional[Sequence[str]] = None,
+    how: MergeHow = "inner",
+    validate: Optional[MergeValidate] = None,
+    indicator: Union[bool, str] = False,
+    sort: bool = False,
+    suffix_template: str = "_df{index}",
+) -> pd.DataFrame
+```
+
+Utility helper that powers the pipeline join flow. The function joins any number of `DataFrame` objects on shared column names, automatically templating suffixes for overlapping columns and optionally surfacing pandas' `_merge` indicator on the final merge step.
+
+```python
+sales_with_targets = join_dataframes_on_common_columns(
+    [regional_sales_df, targets_df, territories_df],
+    columns=["region_id"],
+    how="left",
+    validate="m:1",
+    indicator=True,
+    suffix_template="_src{index}",
+)
 ```
 
 ## Data Cleaning

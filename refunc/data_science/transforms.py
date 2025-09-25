@@ -7,7 +7,19 @@ and transformation chains with logging and error handling.
 """
 
 import warnings
-from typing import List, Dict, Any, Optional, Union, Callable, Tuple, Type
+from typing import (
+    List,
+    Dict,
+    Any,
+    Optional,
+    Union,
+    Callable,
+    Tuple,
+    Type,
+    Sequence,
+    Literal,
+    cast,
+)
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 from enum import Enum
@@ -22,6 +34,7 @@ from datetime import datetime
 
 from ..exceptions import RefuncError, ValidationError
 from ..logging import get_logger
+from pandas.errors import MergeError
 
 
 class TransformationType(Enum):
@@ -478,19 +491,113 @@ class CategoricalEncoder(BaseTransformer):
         return result
 
 
+MergeHow = Literal[
+    "left",
+    "right",
+    "outer",
+    "inner",
+    "cross",
+    "left_anti",
+    "right_anti",
+]
+
+MergeValidate = Literal[
+    "one_to_one",
+    "1:1",
+    "one_to_many",
+    "1:m",
+    "many_to_one",
+    "m:1",
+    "many_to_many",
+    "m:m",
+]
+
+
+JoinSourceProvider = Union[
+    Sequence[pd.DataFrame],
+    Callable[[pd.DataFrame], Sequence[pd.DataFrame]],
+    Callable[[], Sequence[pd.DataFrame]],
+]
+
+
+@dataclass(frozen=True)
+class PipelineJoinConfig:
+    """Configuration for joining additional DataFrames within a pipeline."""
+
+    sources: JoinSourceProvider
+    columns: Optional[Sequence[str]] = None
+    how: MergeHow = "inner"
+    validate: Optional[MergeValidate] = None
+    indicator: Union[bool, str] = False
+    sort: bool = False
+    suffix_template: str = "_df{index}"
+
+
 class TransformationPipeline:
     """Composable data transformation pipeline."""
     
-    def __init__(self, name: str = "pipeline"):
+    def __init__(
+        self,
+        name: str = "pipeline",
+        *,
+        join_config: Optional[PipelineJoinConfig] = None,
+    ):
         self.name = name
         self.steps = []
         self.fitted = False
         self.logger = get_logger(f"pipeline.{name}")
+        self._join_config = join_config
     
     def add_step(self, transformer: BaseTransformer) -> 'TransformationPipeline':
         """Add a transformation step to the pipeline."""
         self.steps.append(transformer)
         return self
+    
+    def set_join_config(self, join_config: PipelineJoinConfig) -> 'TransformationPipeline':
+        """Attach a join configuration that runs before transformation steps."""
+        self._join_config = join_config
+        return self
+
+    def _resolve_join_sources(self, data: pd.DataFrame) -> Sequence[pd.DataFrame]:
+        if self._join_config is None:
+            return []
+        sources = self._join_config.sources
+        if callable(sources):
+            callable_sources = cast(Callable[..., Sequence[pd.DataFrame]], sources)
+            try:
+                resolved_candidate = callable_sources(data)
+            except TypeError:
+                resolved_candidate = callable_sources()
+        else:
+            resolved_candidate = sources
+        resolved_sequence = cast(Sequence[pd.DataFrame], resolved_candidate)
+        resolved_list = list(resolved_sequence)
+        if not resolved_list:
+            raise ValidationError("Join configuration requires at least one DataFrame source")
+        for index, frame in enumerate(resolved_list):
+            if not isinstance(frame, pd.DataFrame):
+                raise ValidationError(f"Join source at position {index} is not a pandas DataFrame")
+        return resolved_list
+
+    def _apply_join_if_configured(self, data: pd.DataFrame) -> pd.DataFrame:
+        if self._join_config is None:
+            return data
+        additional_frames = self._resolve_join_sources(data)
+        join_inputs = [data, *additional_frames]
+        joined = join_dataframes_on_common_columns(
+            join_inputs,
+            columns=self._join_config.columns,
+            how=self._join_config.how,
+            validate=self._join_config.validate,
+            indicator=self._join_config.indicator,
+            sort=self._join_config.sort,
+            suffix_template=self._join_config.suffix_template,
+        )
+        self.logger.info(
+            "Applied pre-step join for pipeline '%s' with %d additional frame(s)"
+            % (self.name, len(additional_frames))
+        )
+        return joined
     
     def add_imputation(
         self,
@@ -534,6 +641,7 @@ class TransformationPipeline:
     def fit(self, data: pd.DataFrame, target: Optional[pd.Series] = None) -> 'TransformationPipeline':
         """Fit all transformers in the pipeline."""
         current_data = data.copy()
+        current_data = self._apply_join_if_configured(current_data)
         
         for transformer in self.steps:
             self.logger.info(f"Fitting transformer: {transformer.name}")
@@ -553,6 +661,48 @@ class TransformationPipeline:
         original_data = data.copy()
         step_results = []
         success = True
+        
+        if self._join_config is not None:
+            join_start_time = datetime.now()
+            try:
+                joined_data = self._apply_join_if_configured(current_data)
+                join_result = TransformationResult(
+                    success=True,
+                    data=joined_data,
+                    original_shape=current_data.shape,
+                    final_shape=joined_data.shape,
+                    transformation_name="join_dataframes",
+                    execution_time=(datetime.now() - join_start_time).total_seconds(),
+                )
+                current_data = joined_data
+                self.logger.info(
+                    "Join step completed: %s → %s"
+                    % (join_result.original_shape, join_result.final_shape)
+                )
+            except ValidationError as error:
+                execution_time = (datetime.now() - join_start_time).total_seconds()
+                join_result = TransformationResult(
+                    success=False,
+                    data=None,
+                    original_shape=current_data.shape,
+                    final_shape=current_data.shape,
+                    transformation_name="join_dataframes",
+                    execution_time=execution_time,
+                    errors=[str(error)],
+                )
+                success = False
+                self.logger.error(f"Join step failed: {error}")
+            step_results.append(join_result)
+            if not success:
+                total_execution_time = (datetime.now() - start_time).total_seconds()
+                return PipelineResult(
+                    success=False,
+                    original_data=original_data,
+                    final_data=None,
+                    step_results=step_results,
+                    total_execution_time=total_execution_time,
+                    pipeline_name=self.name,
+                )
         
         for transformer in self.steps:
             step_start_time = datetime.now()
@@ -643,17 +793,97 @@ class CustomTransformer(BaseTransformer):
 
 
 # Convenience functions
-def create_basic_pipeline() -> TransformationPipeline:
+JOIN_LOGGER = get_logger("transforms.join")
+
+
+def join_dataframes_on_common_columns(
+    dataframes: Sequence[pd.DataFrame],
+    *,
+    columns: Optional[Sequence[str]] = None,
+    how: MergeHow = "inner",
+    validate: Optional[MergeValidate] = None,
+    indicator: Union[bool, str] = False,
+    sort: bool = False,
+    suffix_template: str = "_df{index}",
+) -> pd.DataFrame:
+    """Join a sequence of DataFrames on shared column names."""
+
+    if not dataframes:
+        raise ValidationError("At least one DataFrame is required for join operations")
+
+    total_frames = len(dataframes)
+    for index, dataframe in enumerate(dataframes):
+        if not isinstance(dataframe, pd.DataFrame):
+            raise ValidationError(f"Item at position {index} is not a pandas DataFrame")
+
+    if total_frames == 1:
+        return dataframes[0].copy()
+
+    if columns is not None:
+        join_columns = list(columns)
+        missing_columns: Dict[int, List[str]] = {}
+        for index, dataframe in enumerate(dataframes):
+            absent = [column for column in join_columns if column not in dataframe.columns]
+            if absent:
+                missing_columns[index] = absent
+        if missing_columns:
+            raise ValidationError(f"Join columns missing from DataFrames: {missing_columns}")
+    else:
+        common = set(dataframes[0].columns)
+        for dataframe in dataframes[1:]:
+            common &= set(dataframe.columns)
+        if not common:
+            raise ValidationError("No shared column names found across all DataFrames")
+        join_columns = sorted(common)
+
+    JOIN_LOGGER.info(
+        f"Joining {total_frames} dataframes on columns {join_columns} using {how} join"
+    )
+
+    result = dataframes[0].copy()
+    last_index = total_frames - 1
+    for index in range(1, total_frames):
+        dataframe = dataframes[index]
+        indicator_flag: Union[bool, str] = indicator if indicator and index == last_index else False
+        try:
+            suffix = suffix_template.format(index=index)
+        except (KeyError, IndexError, ValueError) as error:
+            raise ValidationError(f"Unable to generate suffix for index {index}: {error}") from error
+
+        try:
+            result = pd.merge(
+                result,
+                dataframe,
+                on=join_columns,
+                how=how,
+                suffixes=("", suffix),
+                validate=validate,
+                indicator=indicator_flag,
+                sort=sort,
+            )
+        except MergeError as error:
+            raise ValidationError(f"Join failed on columns {join_columns}: {error}") from error
+
+    return result
+
+
+def create_basic_pipeline(
+    *,
+    join_config: Optional[PipelineJoinConfig] = None,
+) -> TransformationPipeline:
     """Create a basic preprocessing pipeline."""
-    return (TransformationPipeline("basic_preprocessing")
+    return (TransformationPipeline("basic_preprocessing", join_config=join_config)
             .add_imputation(ImputationMethod.MEDIAN)
             .add_scaling(ScalingMethod.STANDARD)
             .add_encoding(method='onehot'))
 
 
-def create_robust_pipeline() -> TransformationPipeline:
+def create_robust_pipeline(
+    *,
+    join_config: Optional[PipelineJoinConfig] = None,
+) -> TransformationPipeline:
     """Create a robust preprocessing pipeline with outlier handling."""
-    return (TransformationPipeline("robust_preprocessing")
+    return (TransformationPipeline("robust_preprocessing", join_config=join_config)
             .add_outlier_removal(method='iqr', threshold=1.5)
             .add_imputation(ImputationMethod.MEDIAN)
             .add_scaling(ScalingMethod.ROBUST)
@@ -663,13 +893,67 @@ def create_robust_pipeline() -> TransformationPipeline:
 def apply_quick_preprocessing(
     data: pd.DataFrame,
     target: Optional[pd.Series] = None,
-    include_outlier_removal: bool = False
+    include_outlier_removal: bool = False,
+    *,
+    join_config: Optional[PipelineJoinConfig] = None,
+    join_sources: Optional[JoinSourceProvider] = None,
+    join_columns: Optional[Sequence[str]] = None,
+    join_how: MergeHow = "inner",
+    join_validate: Optional[MergeValidate] = None,
+    join_indicator: Union[bool, str] = False,
+    join_sort: bool = False,
+    join_suffix_template: str = "_df{index}",
 ) -> pd.DataFrame:
-    """Apply quick preprocessing to data."""
+    """Apply quick preprocessing to data.
+
+    Parameters
+    ----------
+    data:
+        Primary DataFrame to transform.
+    target:
+        Optional target series for supervised scenarios.
+    include_outlier_removal:
+        Set to ``True`` to include outlier removal prior to imputation.
+    join_config:
+        Explicit pipeline join configuration evaluated before transformation steps.
+    join_sources:
+        Optional shorthand for providing additional DataFrames to join with ``data``.
+        Ignored when ``join_config`` is supplied directly.
+    join_columns:
+        Column names used for the join when ``join_sources`` is provided.
+    join_how:
+        Join method applied to the pipeline input when ``join_sources`` is provided.
+    join_validate:
+        Optional pandas validation rule enforced during the join.
+    join_indicator:
+        Whether to append the pandas merge indicator column on the final join operation.
+    join_sort:
+        When ``True`` the join keys are sorted before returning from the join step.
+    join_suffix_template:
+        Template applied to duplicate column names contributed by additional DataFrames.
+
+    Returns
+    -------
+    pd.DataFrame
+        The transformed result after pipeline execution.
+    """
+
+    computed_join_config = join_config
+    if computed_join_config is None and join_sources is not None:
+        computed_join_config = PipelineJoinConfig(
+            sources=join_sources,
+            columns=join_columns,
+            how=join_how,
+            validate=join_validate,
+            indicator=join_indicator,
+            sort=join_sort,
+            suffix_template=join_suffix_template,
+        )
+
     if include_outlier_removal:
-        pipeline = create_robust_pipeline()
+        pipeline = create_robust_pipeline(join_config=computed_join_config)
     else:
-        pipeline = create_basic_pipeline()
+        pipeline = create_basic_pipeline(join_config=computed_join_config)
     
     result = pipeline.fit_transform(data, target)
     

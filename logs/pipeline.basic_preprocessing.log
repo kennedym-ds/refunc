@@ -4,3 +4,75 @@
 2025-09-16 22:03:01,661 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (100, 4) → (100, 4)
 2025-09-16 22:03:01,671 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (100, 4) → (100, 4)
 2025-09-16 22:03:01,675 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (100, 4) → (100, 6)
+2025-09-24 14:11:45,978 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-24 14:11:45,979 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: imputer_median
+2025-09-24 14:11:45,982 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: scaler_standard
+2025-09-24 14:11:45,992 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: encoder_onehot
+2025-09-24 14:11:45,997 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-24 14:11:45,997 - pipeline.basic_preprocessing - [INFO] - Join step completed: (2, 2) → (2, 3)
+2025-09-24 14:11:45,998 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (2, 3) → (2, 3)
+2025-09-24 14:11:46,002 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (2, 3) → (2, 3)
+2025-09-24 14:11:46,003 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (2, 3) → (2, 3)
+2025-09-24 14:11:46,018 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-24 14:11:46,019 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: imputer_median
+2025-09-24 14:11:46,021 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: scaler_standard
+2025-09-24 14:11:46,025 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: encoder_onehot
+2025-09-24 14:11:46,035 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-24 14:11:46,035 - pipeline.basic_preprocessing - [INFO] - Join step completed: (2, 2) → (2, 4)
+2025-09-24 14:11:46,035 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (2, 4) → (2, 4)
+2025-09-24 14:11:46,038 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (2, 4) → (2, 4)
+2025-09-24 14:11:46,040 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (2, 4) → (2, 4)
+2025-09-25 23:26:01,968 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:26:01,968 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: imputer_median
+2025-09-25 23:26:01,969 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: scaler_standard
+2025-09-25 23:26:01,973 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: encoder_onehot
+2025-09-25 23:26:01,976 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:26:01,976 - pipeline.basic_preprocessing - [INFO] - Join step completed: (2, 2) → (2, 3)
+2025-09-25 23:26:01,977 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (2, 3) → (2, 3)
+2025-09-25 23:26:01,981 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (2, 3) → (2, 3)
+2025-09-25 23:26:01,983 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (2, 3) → (2, 3)
+2025-09-25 23:26:01,991 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:26:01,991 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: imputer_median
+2025-09-25 23:26:01,992 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: scaler_standard
+2025-09-25 23:26:01,994 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: encoder_onehot
+2025-09-25 23:26:02,003 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:26:02,003 - pipeline.basic_preprocessing - [INFO] - Join step completed: (2, 2) → (2, 4)
+2025-09-25 23:26:02,003 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (2, 4) → (2, 4)
+2025-09-25 23:26:02,004 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (2, 4) → (2, 4)
+2025-09-25 23:26:02,006 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (2, 4) → (2, 4)
+2025-09-25 23:26:05,369 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:26:05,369 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: imputer_median
+2025-09-25 23:26:05,370 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: scaler_standard
+2025-09-25 23:26:05,375 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: encoder_onehot
+2025-09-25 23:26:05,422 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:26:05,422 - pipeline.basic_preprocessing - [INFO] - Join step completed: (2, 2) → (2, 3)
+2025-09-25 23:26:05,423 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (2, 3) → (2, 3)
+2025-09-25 23:26:05,430 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (2, 3) → (2, 3)
+2025-09-25 23:26:05,432 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (2, 3) → (2, 3)
+2025-09-25 23:26:05,452 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:26:05,452 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: imputer_median
+2025-09-25 23:26:05,453 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: scaler_standard
+2025-09-25 23:26:05,455 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: encoder_onehot
+2025-09-25 23:26:05,462 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:26:05,462 - pipeline.basic_preprocessing - [INFO] - Join step completed: (2, 2) → (2, 4)
+2025-09-25 23:26:05,463 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (2, 4) → (2, 4)
+2025-09-25 23:26:05,464 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (2, 4) → (2, 4)
+2025-09-25 23:26:05,466 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (2, 4) → (2, 4)
+2025-09-25 23:30:13,928 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:30:13,928 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: imputer_median
+2025-09-25 23:30:13,929 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: scaler_standard
+2025-09-25 23:30:13,933 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: encoder_onehot
+2025-09-25 23:30:13,936 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:30:13,936 - pipeline.basic_preprocessing - [INFO] - Join step completed: (2, 2) → (2, 3)
+2025-09-25 23:30:13,936 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (2, 3) → (2, 3)
+2025-09-25 23:30:13,939 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (2, 3) → (2, 3)
+2025-09-25 23:30:13,940 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (2, 3) → (2, 3)
+2025-09-25 23:30:13,947 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:30:13,947 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: imputer_median
+2025-09-25 23:30:13,948 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: scaler_standard
+2025-09-25 23:30:13,950 - pipeline.basic_preprocessing - [INFO] - Fitting transformer: encoder_onehot
+2025-09-25 23:30:13,953 - pipeline.basic_preprocessing - [INFO] - Applied pre-step join for pipeline 'basic_preprocessing' with 1 additional frame(s)
+2025-09-25 23:30:13,954 - pipeline.basic_preprocessing - [INFO] - Join step completed: (2, 2) → (2, 4)
+2025-09-25 23:30:13,954 - pipeline.basic_preprocessing - [INFO] - Successfully applied imputer_median: (2, 4) → (2, 4)
+2025-09-25 23:30:13,956 - pipeline.basic_preprocessing - [INFO] - Successfully applied scaler_standard: (2, 4) → (2, 4)
+2025-09-25 23:30:13,958 - pipeline.basic_preprocessing - [INFO] - Successfully applied encoder_onehot: (2, 4) → (2, 4)
