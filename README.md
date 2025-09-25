@@ -6,6 +6,16 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+[![CI](https://github.com/kennedym-ds/refunc/workflows/CI/badge.svg)](https://github.com/kennedym-ds/refunc/actions/workflows/ci.yml)
+[![Documentation Status](https://github.com/kennedym-ds/refunc/workflows/Deploy%20Documentation/badge.svg)](https://kennedym-ds.github.io/refunc/)
+[![codecov](https://codecov.io/gh/kennedym-ds/refunc/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/kennedym-ds/refunc)
+[![Security Rating](https://github.com/kennedym-ds/refunc/workflows/Security%20Scan/badge.svg)](https://github.com/kennedym-ds/refunc/actions/workflows/security.yml)
+
+[![PyPI version](https://badge.fury.io/py/refunc.svg)](https://badge.fury.io/py/refunc)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/refunc)](https://pypi.org/project/refunc/)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/kennedym-ds/refunc/graphs/commit-activity)
+[![GitHub contributors](https://img.shields.io/github/contributors/kennedym-ds/refunc.svg)](https://GitHub.com/kennedym-ds/refunc/graphs/contributors/)
+
 ## 🎯 Overview
 
 Refunc is a comprehensive ML utilities toolkit that provides essential building blocks for machine learning projects. From intelligent file handling and advanced logging to robust exception management and performance monitoring, Refunc eliminates boilerplate code and provides production-ready utilities that scale with your projects.

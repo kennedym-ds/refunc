@@ -43,6 +43,8 @@ setuptools.setup(
     project_urls={
         "Bug Reports": "https://github.com/kennedym-ds/refunc/issues",
         "Source": "https://github.com/kennedym-ds/refunc",
-        "Documentation": "https://github.com/kennedym-ds/refunc/blob/main/README.md",
+        "Documentation": "https://kennedym-ds.github.io/refunc/",
+        "Changelog": "https://github.com/kennedym-ds/refunc/blob/main/CHANGELOG.md",
+        "CI/CD": "https://github.com/kennedym-ds/refunc/actions",
     },
 )
