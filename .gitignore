@@ -286,3 +286,17 @@ debug_*.py
 scratch_*.pytest_final/
 test_venv/
 *_venv/
+
+# Benchmarking artifacts
+benchmarks/.benchmarks/
+benchmark-results-*.json
+.benchmarks/
+.pytest_benchmark/
+
+# Security scanning artifacts
+security-reports-*.json
+security-report.json
+.safety-policy-*.json
+
+# Refunc specific cache
+.refunc_cache/

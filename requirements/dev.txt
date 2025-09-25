@@ -22,3 +22,9 @@ nbsphinx>=0.8.0
 # GPU monitoring (optional)
 GPUtil>=1.4.0
 py3nvml>=0.2.0
+
+# Security scanning tools
+bandit>=1.7.0
+safety>=2.3.0
+semgrep>=1.0.0
+pip-audit>=2.6.0

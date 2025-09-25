@@ -1,0 +1,61 @@
+rules:
+  # Python security rules
+  - id: python-security-best-practices
+    pattern-either:
+      # Detect use of dangerous functions
+      - pattern: eval(...)
+      - pattern: exec(...)
+      - pattern: __import__(...)
+      
+      # Detect SQL injection patterns  
+      - pattern: cursor.execute($X + ...)
+      - pattern: cursor.execute(f"...")
+      
+      # Detect command injection
+      - pattern: os.system($X + ...)
+      - pattern: subprocess.call($X + ...)
+      
+      # Detect hardcoded secrets
+      - pattern: password = "..."
+      - pattern: api_key = "..."
+      - pattern: secret = "..."
+      
+    message: Potential security issue detected
+    languages: [python]
+    severity: WARNING
+    
+  # File permission issues
+  - id: file-permissions
+    pattern-either:
+      - pattern: os.chmod($PATH, 0o777)
+      - pattern: os.chmod($PATH, 0o666)
+    message: Overly permissive file permissions
+    languages: [python]
+    severity: WARNING
+    
+  # Path traversal detection
+  - id: path-traversal
+    pattern-either:
+      - pattern: open($X + "../" + ...)
+      - pattern: open("../" + ...)
+    message: Potential path traversal vulnerability
+    languages: [python]
+    severity: ERROR
+
+# Configuration options
+options:
+  # Paths to exclude from scanning
+  exclude:
+    - "tests/"
+    - "venv/"
+    - ".venv/"
+    - "build/"
+    - "dist/"
+    - ".git/"
+    - "__pycache__/"
+    
+  # Include additional rule packs
+  include:
+    - "p/python"
+    - "p/security-audit"
+    - "p/owasp-top-ten"

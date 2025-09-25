@@ -1,0 +1,31 @@
+[bandit]
+# Bandit configuration for security scanning
+
+# Skips to apply globally
+skips = B101,B601
+
+# Tests to exclude by ID
+exclude_dirs = tests,venv,.venv,build,dist,.tox,.git
+
+# Severity level (high, medium, low)
+level = medium
+
+# Confidence level (high, medium, low)  
+confidence = medium
+
+# Format for output (json, csv, txt, html, xml)
+format = txt
+
+# Recursive scan
+recursive = true
+
+# Number of lines of code context to print
+context_lines = 3
+
+[bandit.assert_used]
+# Skip assert_used check in test files
+skips = ['**/test_*.py', '**/tests.py']
+
+[bandit.hardcoded_password_string]
+# Skip hardcoded password checks for test fixtures
+skips = ['**/test_*.py', '**/conftest.py', '**/fixtures/**']

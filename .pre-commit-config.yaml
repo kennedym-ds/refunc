@@ -23,3 +23,16 @@ repos:
     rev: 'v0.910'
     hooks:
     -   id: mypy
+# Security scanning hooks
+-   repo: https://github.com/PyCQA/bandit
+    rev: '1.7.5'
+    hooks:
+    -   id: bandit
+        args: ['-c', '.bandit']
+        exclude: ^tests/
+-   repo: https://github.com/gitguardian/ggshield
+    rev: v1.25.0
+    hooks:
+    -   id: ggshield
+        language: python
+        stages: [commit]

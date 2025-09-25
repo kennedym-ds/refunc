@@ -1,0 +1,94 @@
+name: Performance Benchmarks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run benchmarks daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  benchmarks:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, 3.11]
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0  # Fetch full history for comparison
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[test]
+        pip install pytest-benchmark
+    
+    - name: Run benchmarks
+      run: |
+        python scripts/run_benchmarks.py --threshold 25
+      continue-on-error: true
+      id: benchmarks
+    
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results-py${{ matrix.python-version }}
+        path: benchmarks/.benchmarks/
+        retention-days: 30
+    
+    - name: Comment PR with benchmark results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'benchmarks/.benchmarks/results.json';
+          
+          if (fs.existsSync(path)) {
+            const results = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const benchmarks = results.benchmarks || [];
+            
+            let comment = '## 📊 Performance Benchmark Results\n\n';
+            comment += `**Python ${{ matrix.python-version }}**\n\n`;
+            comment += `Total benchmarks: ${benchmarks.length}\n\n`;
+            
+            if (benchmarks.length > 0) {
+              comment += '| Benchmark | Mean Time | Std Dev | Operations/sec |\n';
+              comment += '|-----------|-----------|---------|----------------|\n';
+              
+              benchmarks.slice(0, 10).forEach(bench => {
+                const name = bench.name.replace(/^.*::/, '');
+                const mean = (bench.stats.mean * 1000).toFixed(3);
+                const stddev = (bench.stats.stddev * 1000).toFixed(3);
+                const ops = bench.stats.ops ? bench.stats.ops.toFixed(0) : 'N/A';
+                comment += `| ${name} | ${mean} ms | ${stddev} ms | ${ops} |\n`;
+              });
+              
+              if (benchmarks.length > 10) {
+                comment += `\n*... and ${benchmarks.length - 10} more benchmarks*\n`;
+              }
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+          }
+    
+    - name: Fail on regression
+      if: steps.benchmarks.outcome == 'failure'
+      run: |
+        echo "Performance regression detected!"
+        exit 1
