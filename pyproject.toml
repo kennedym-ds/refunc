@@ -61,6 +61,12 @@ test = [
     "pytest-mock>=3.6.0",
     "pytest-benchmark>=3.4.0",
 ]
+security = [
+    "bandit>=1.7.0",
+    "safety>=2.3.0", 
+    "semgrep>=1.0.0",
+    "pip-audit>=2.6.0",
+]
 docs = [
     "sphinx>=4.0.0",
     "sphinx-rtd-theme>=1.0.0",

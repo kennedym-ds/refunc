@@ -1,0 +1,13 @@
+# Security scanning and vulnerability assessment tools
+
+# Python security linting
+bandit>=1.7.0
+
+# Dependency vulnerability scanning  
+safety>=2.3.0
+
+# Static analysis security scanning
+semgrep>=1.0.0
+
+# Python package vulnerability scanning
+pip-audit>=2.6.0

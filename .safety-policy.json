@@ -1,0 +1,17 @@
+{
+  "security": {
+    "ignore-vulnerabilities": [],
+    "ignore-unpinned-requirements": false,
+    "continue-on-vulnerability-error": false,
+    "ignore-unpinned-requirements": false
+  },
+  "alert": {
+    "ignore-severities": [],
+    "ignore-cvss-severity-below": 0.0,
+    "ignore-cvss-unknown-severity": false
+  },
+  "report": {
+    "only-report": [],
+    "ignore": []
+  }
+}
