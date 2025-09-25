@@ -436,7 +436,8 @@ class DataProfiler:
                         corr_value = correlation_matrix.iloc[i, j]
                         if pd.notna(corr_value) and isinstance(corr_value, (int, float)) and abs(corr_value) > 0.7:
                             profile.high_correlations.append((col1, col2, float(corr_value)))
-                    except:
+                    except (IndexError, KeyError, ValueError, TypeError) as e:
+                        warnings.warn(f"Failed to process correlation between '{col1}' and '{col2}': {e}")
                         continue
             
             # Sort by absolute correlation value
