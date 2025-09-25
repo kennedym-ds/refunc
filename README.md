@@ -6,6 +6,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
+[![CI](https://github.com/kennedym-ds/refunc/workflows/CI/badge.svg)](https://github.com/kennedym-ds/refunc/actions/workflows/ci.yml)
+[![Pre-commit](https://github.com/kennedym-ds/refunc/workflows/Pre-commit/badge.svg)](https://github.com/kennedym-ds/refunc/actions/workflows/pre-commit.yml)
+[![Documentation](https://github.com/kennedym-ds/refunc/workflows/Documentation/badge.svg)](https://github.com/kennedym-ds/refunc/actions/workflows/docs.yml)
+[![codecov](https://codecov.io/gh/kennedym-ds/refunc/branch/main/graph/badge.svg)](https://codecov.io/gh/kennedym-ds/refunc)
+
 ## 🎯 Overview
 
 Refunc is a comprehensive ML utilities toolkit that provides essential building blocks for machine learning projects. From intelligent file handling and advanced logging to robust exception management and performance monitoring, Refunc eliminates boilerplate code and provides production-ready utilities that scale with your projects.
