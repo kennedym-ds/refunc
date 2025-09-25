@@ -281,7 +281,6 @@ __pycache__/
 
 # Local scripts and utilities
 local_*.py
-test_*.py
 debug_*.py
 scratch_*.pytest_final/
 test_venv/
