@@ -36,7 +36,8 @@ setuptools.setup(
     extras_require={
         "gpu": ["GPUtil>=1.4.0", "py3nvml>=0.2.0"],
         "dev": ["black>=22.0.0", "isort>=5.10.0", "flake8>=4.0.0", "mypy>=0.900", "pre-commit>=2.15.0"],
-        "test": ["pytest>=6.2.0", "pytest-cov>=2.12.0", "pytest-mock>=3.6.0", "pytest-benchmark>=3.4.0"],
+        "test": ["pytest>=6.2.0", "pytest-cov>=2.12.0", "pytest-mock>=3.6.0", "pytest-benchmark>=3.4.0", "pytest-asyncio>=0.18.0", "hypothesis>=6.0.0"],
+        "fuzzy": ["fuzzywuzzy>=0.18.0", "python-levenshtein>=0.12.0"],
         "docs": ["sphinx>=4.0.0", "sphinx-rtd-theme>=1.0.0", "jupyter>=1.0.0", "nbsphinx>=0.8.0"],
     },
     keywords=["machine learning", "utilities", "logging", "performance", "decorators", "ml"],
