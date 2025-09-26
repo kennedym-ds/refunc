@@ -468,7 +468,8 @@ class DataCleaner:
             try:
                 date_parser.parse(value)
                 successful_parses += 1
-            except:
+            except (ValueError, TypeError, OverflowError) as e:
+                # Date parsing can fail for various reasons - invalid format, type, or overflow
                 continue
         
         return successful_parses / len(sample_values) > 0.7

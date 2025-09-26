@@ -103,7 +103,8 @@ class RefuncDataFrameAccessor:
                 try:
                     categorical_memory = col_data.astype('category').memory_usage(deep=True)
                     categorical_savings = base_memory - categorical_memory
-                except:
+                except (ValueError, TypeError, AttributeError) as e:
+                    self.logger.debug(f"Categorical conversion failed for column '{col}': {e}")
                     categorical_memory = base_memory
                     categorical_savings = 0
             else:
@@ -115,7 +116,8 @@ class RefuncDataFrameAccessor:
                 try:
                     nullable_memory = col_data.astype('Int64').memory_usage(deep=True)
                     nullable_savings = base_memory - nullable_memory
-                except:
+                except (ValueError, TypeError, AttributeError) as e:
+                    self.logger.debug(f"Nullable integer conversion failed for column '{col}': {e}")
                     nullable_memory = base_memory
                     nullable_savings = 0
             else:
@@ -176,8 +178,8 @@ class RefuncDataFrameAccessor:
                     float32_data = col_data.astype('float32')
                     if np.allclose(col_data.dropna(), float32_data.dropna(), equal_nan=True):
                         df_optimized[col] = float32_data
-                except:
-                    pass
+                except (ValueError, TypeError, AttributeError) as e:
+                    self.logger.debug(f"Float32 optimization failed for column '{col}': {e}")
             
             elif col_data.dtype == 'object':
                 # Convert to categorical if low cardinality
