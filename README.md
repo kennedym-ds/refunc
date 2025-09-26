@@ -130,10 +130,10 @@ graph TB
 
 - **[⚠️ Exceptions Framework](docs/api/exceptions.md)** - Error handling and retry mechanisms
 - **[📊 Math & Statistics](docs/api/math_stats.md)** - Statistical analysis and hypothesis testing
-- **📝 Logging** *(coming soon)* - ML-specific logging and experiment tracking
-- **⚙️ Config** *(coming soon)* - Configuration management utilities
-- **⚡ Decorators** *(coming soon)* - Performance monitoring decorators
-- **🔧 Utils** *(coming soon)* - File handling and data utilities
+- **[📝 Logging](docs/api/logging.md)** - ML-specific logging and experiment tracking
+- **[⚙️ Config](docs/api/config.md)** - Configuration management utilities
+- **[⚡ Decorators](docs/api/decorators.md)** - Performance monitoring decorators
+- **[🔧 Utils](docs/api/utils.md)** - File handling and data utilities
 
 ## 🚀 Repository Structure
 
