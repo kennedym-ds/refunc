@@ -8,7 +8,7 @@
 
 [![CI](https://github.com/kennedym-ds/refunc/workflows/CI/badge.svg)](https://github.com/kennedym-ds/refunc/actions/workflows/ci.yml)
 [![Documentation Status](https://github.com/kennedym-ds/refunc/workflows/Deploy%20Documentation/badge.svg)](https://kennedym-ds.github.io/refunc/)
-[![codecov](https://codecov.io/gh/kennedym-ds/refunc/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/kennedym-ds/refunc)
+[![codecov](https://codecov.io/gh/kennedym-ds/refunc/branch/main/graph/badge.svg)](https://codecov.io/gh/kennedym-ds/refunc)
 [![Security Rating](https://github.com/kennedym-ds/refunc/workflows/Security%20Scan/badge.svg)](https://github.com/kennedym-ds/refunc/actions/workflows/security.yml)
 
 [![PyPI version](https://badge.fury.io/py/refunc.svg)](https://badge.fury.io/py/refunc)
@@ -87,6 +87,32 @@ logger.log_hyperparams({"lr": 0.001, "batch_size": 32})
 stats = StatisticsEngine()
 results = stats.hypothesis_test(data1, data2, test_type="t_test")
 outliers = stats.detect_outliers(data, method="iqr")
+```
+
+### Data Science Toolkit in Action
+
+```python
+import pandas as pd
+from refunc.data_science import DataCleaner
+
+raw = pd.DataFrame(
+    {
+        "user": ["alice", "Bob ", "ALICE"],
+        "age": ["32", "29", None],
+        "signup": ["2025-08-01", "2025/08/02", "01-08-2025"],
+    }
+)
+
+cleaner = DataCleaner()
+clean, report = cleaner.clean_dataframe(raw)
+
+print(report.summary())
+# Data Cleaning Report
+# ...
+
+# Access the pandas accessor for quick checks
+memory_report = clean.refunc.memory_usage_detailed()
+print(memory_report[["column", "current_memory_mb"]])
 ```
 
 ## 🏗️ Architecture & Design
@@ -198,17 +224,17 @@ pre-commit install
 **Core Features Complete:**
 
 - ✅ Exception handling framework with retry mechanisms
-- ✅ Mathematical and statistical utilities
-- ✅ Basic file handling utilities
-- ✅ Configuration management system
-- ✅ Cross-platform setup scripts
+- ✅ Production logging & experiment tracking toolkit
+- ✅ Performance monitoring decorators and profilers
+- ✅ Data science cleaning, validation, and profiling suite
+- ✅ File handling, configuration management, and math/stats engines
 
-**In Development:**
+**Roadmap Highlights:**
 
-- 🚧 Advanced logging framework with ML experiment tracking
-- 🚧 Performance monitoring decorators
-- 🚧 Data science preprocessing utilities
-- 🚧 ML-specific helper functions
+- 🚧 Enhanced GPU monitoring and framework integrations
+- 🚧 Advanced statistical methods and optimization tooling
+- 🚧 Experiment dashboard with persistent metrics storage
+- 🚧 Distributed execution helpers and cloud-native workflows
 
 See our **[📋 Changelog](CHANGELOG.md)** for detailed release notes and roadmap.
 
@@ -230,7 +256,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **📖 [Documentation](docs/README.md)**
 - **🐛 [Report Issues](https://github.com/kennedym-ds/refunc/issues)**
 - **💡 [Feature Requests](https://github.com/kennedym-ds/refunc/issues)**
-- **📧 [Contact](mailto:your.email@example.com)**
+- **📧 [Contact](mailto:support@refunc.dev)**
 
 ---
 

@@ -56,6 +56,7 @@ For contributors and advanced users:
 1. Start with the [Quick Start Guide](guides/quickstart.md)
 2. Follow the [Installation Guide](guides/installation.md)
 3. Try the [Basic Usage Examples](examples/basic_usage.md)
+4. Explore the [Data Science Utilities](api/data_science.md) for cleaning and profiling workflows
 
 ### Need API Documentation?
 
@@ -80,7 +81,7 @@ For contributors and advanced users:
 - 📖 Check this documentation first
 - 🔍 Search [existing issues](https://github.com/kennedym-ds/refunc/issues)
 - 💡 Start a [discussion](https://github.com/kennedym-ds/refunc/discussions)
-- 💬 [Discord Community](https://discord.gg/refunc) *(coming soon)*
+- � Email [support@refunc.dev](mailto:support@refunc.dev)
 - 🐛 [Report bugs](https://github.com/kennedym-ds/refunc/issues/new)
 
 ---
