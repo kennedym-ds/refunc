@@ -560,7 +560,7 @@ class TransformationPipeline:
 
     def _resolve_join_sources(self, data: pd.DataFrame) -> Sequence[pd.DataFrame]:
         if self._join_config is None:
-            return []
+            raise ValidationError("Join configuration must be set before resolving join sources")
         sources = self._join_config.sources
         if callable(sources):
             callable_sources = cast(Callable[..., Sequence[pd.DataFrame]], sources)

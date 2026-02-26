@@ -5,6 +5,7 @@ import pytest
 
 from refunc.data_science.transforms import (
     PipelineJoinConfig,
+    TransformationPipeline,
     apply_quick_preprocessing,
     create_basic_pipeline,
     join_dataframes_on_common_columns,
@@ -128,6 +129,14 @@ def test_pipeline_join_config_applies_before_steps() -> None:
     assert any(
         step.transformation_name == "join_dataframes" for step in result.step_results
     )
+
+
+def test_resolve_join_sources_requires_join_config() -> None:
+    """Resolving join sources without join config should raise ValidationError."""
+
+    pipeline = TransformationPipeline()
+    with pytest.raises(ValidationError, match="Join configuration must be set"):
+        pipeline._resolve_join_sources(pd.DataFrame({"id": [1]}))
 
 
 def test_apply_quick_preprocessing_with_join_sources() -> None:
